@@ -1,7 +1,7 @@
 "use client"
 
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
-
+import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardDescription,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/chart"
 
 import {useQuery} from '@tanstack/react-query'
-import api from "@/service/api"
+// import api from "@/service/api"
 
 
 export const description = "Sales And Orders Chart"
@@ -24,16 +24,24 @@ export const description = "Sales And Orders Chart"
 
 function ChartLineMultiple() {
 
-    const {data, isLoading, isError} = useQuery({
+    const {data} = useQuery({
     queryKey:['dashboard'],
     queryFn: getDashboardData,
   })
 
-  async function getDashboardData(){
-    const data =await api.get('dashboardStats')
-    console.log(data?.data)
-    return data?.data
+  async function getDashboardData() {
+  const { data, error } = await supabase
+    .from("dashboard_stats")
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+
+  return data;
+}
 
 const chartData = data?.salesSeries || [];
 

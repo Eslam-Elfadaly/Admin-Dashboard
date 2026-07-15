@@ -1,17 +1,25 @@
 import React from 'react'
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '../ui/spinner';
 
 function Notifications({notification, setNotification}) {
     const {data : notifications , isPending: notificationLoading} = useQuery({
       queryKey: ['notifications'],
-      queryFn : async ()=>{
-        const {data} = await api.get('notifications');
-
-        const selected = data?.filter((n)=> n?.read === false)
-        return selected || []; 
-      },
+       queryFn: async () => {
+       const { data, error } = await supabase
+         .from("notifications")
+         .select("*")
+         .eq("read", true)
+         .order("date", { ascending: false });
+     
+       if (error) {
+         throw error;
+       }
+     
+       return data || [];
+     }
     })
   return (
     <div className={`fixed top-0 right-0 bg-transparent z-30 w-screen h-screen ${notification? 'opacity-100 visible':'opacity-0 invisible'} transition-all duration-300`} onClick={()=>setNotification(false)}>

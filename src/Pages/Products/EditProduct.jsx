@@ -3,13 +3,13 @@ import { X } from 'lucide-react';
 import { useForm , Controller} from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";   
 import z from 'zod';
-import api from '@/service/api';
+// import api from '@/service/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from "sonner"
-
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,7 @@ function EditProduct({editProduct, setEditProduct, id}) {
                       { label: "Active", value: 'Active' },
                       { label: "Inactive", value: "Inactive" },
                       { label: "Draft", value: "Draft" },
-                      { label: "Out of Stock", value: "Out of Stock" }]
+                      { label: "Out Of Stock", value: "Out Of Stock" }]
 
 
     const productSchema = z.object({
@@ -44,8 +44,15 @@ function EditProduct({editProduct, setEditProduct, id}) {
 
       // get Categories
 
-    async function getCategories (){
-      const {data} = await api.get('categories')
+    async function getCategories() {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*");
+    
+      if (error) {
+        throw error;
+      }
+    
       return data || [];
     }
 
@@ -57,16 +64,29 @@ function EditProduct({editProduct, setEditProduct, id}) {
   const categoryitems = categories?.map((c)=>({label:c.name, value:c.name})) || []
 
 //   getCurrentProduct
+
 const {data:product, isPending: getProductPending} = useQuery({
     queryKey: ['products', id],
     queryFn: () => getProduct(id),
 })
-async function getProduct(id){
-    if(id){
-        const {data} = await api.get(`products/${id}`)
-        return data || []
-    }
-    return null
+
+async function getProduct(id) {
+
+  if (!id) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 //  editProduct
@@ -106,15 +126,27 @@ async function PatchProduct(data){
     imageUrl = upload.data.secure_url;
 }
 
-  await api.patch(`products/${id}`, {
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    stock: data.stock,
-    category:data.category,
-    status:data.status,
-    image: imageUrl,
-  });
+ const { data: updatedProduct, error } = await supabase
+    .from("products")
+    .update({
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      stock: data.stock,
+      category: data.category,
+      status: data.status,
+      image: imageUrl,
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+
+  if (error) {
+    throw error;
+  }
+
+  return updatedProduct;
 }
 
 useEffect(()=>{

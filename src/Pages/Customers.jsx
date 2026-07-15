@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/select"
 import { Search } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from "@/lib/supabase";
 import { Trash2 } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChevronRight } from 'lucide-react';
@@ -38,13 +39,22 @@ function Customers() {
   const customersStatue = ['Active', 'Inactive', 'Blocked'];
 
   // get Customers
-  const {data: customers, isPending:customersLoading} = useQuery({
-    queryKey:['customers',state, search],
-    queryFn: async()=>{
-      const {data} = await api.get('customers');
-      return data || [];
-    },
-  })
+  const { data: customers, isPending: customersLoading } = useQuery({
+  queryKey: ["customers", state, search],
+  queryFn: async () => {
+
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  },
+});
 
     
 
@@ -76,11 +86,17 @@ function Customers() {
   },
   })
 
-   async function deleteCustomer({id}){
-    const {data} = await api.delete(`customers/${id}`);
+   async function deleteCustomer({ id }) {
 
-    return data || [];
+  const { error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw error;
   }
+}
   
   // pagination
   const limit = 8;
@@ -165,7 +181,7 @@ function Customers() {
         :
           customersLoading? 
              <tr>
-             <td colSpan={7} className='w-full'>
+             <td colSpan={9} className='w-full'>
                 <Skeleton className="w-full mt-1 h-100"/>
              </td>
              </tr>

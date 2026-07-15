@@ -3,13 +3,13 @@ import { X } from 'lucide-react';
 import { useForm , Controller} from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";   
 import z from 'zod';
-import api from '@/service/api';
+// import api from '@/service/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from "sonner"
-
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,7 @@ function AddProduct({addProduct, setAddProduct}) {
                       { label: "Active", value: 'Active' },
                       { label: "Inactive", value: "Inactive" },
                       { label: "Draft", value: "Draft" },
-                      { label: "Out of Stock", value: "Out of Stock" }]
+                      { label: "Out Of Stock", value: "Out Of Stock" }]
 
 
     const productSchema = z.object({
@@ -44,10 +44,18 @@ function AddProduct({addProduct, setAddProduct}) {
 
       // get Categories
 
-    async function getCategories (){
-      const {data} = await api.get('categories')
-      return data || [];
-    }
+    async function getCategories() {
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
 
    const {data:categories} = useQuery({
 
@@ -73,30 +81,48 @@ const {mutate, isPending} = useMutation({
         });
     }
 })
-async function PostProduct(data){
-const file = data.image[0];
+async function PostProduct(data) {
+
+  const file = data.image[0];
 
   const formData = new FormData();
 
   formData.append("file", file);
   formData.append("upload_preset", "products");
 
+
   const upload = await axios.post(
     "https://api.cloudinary.com/v1_1/ykupxxdn/image/upload",
     formData
   );
 
+
   const imageUrl = upload.data.secure_url;
 
-  await api.post("products", {
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    stock: data.stock,
-    category:data.category,
-    status:data.status,
-    image: imageUrl,
-  });
+
+  const { data: product, error } = await supabase
+    .from("products")
+    .insert({
+      id: crypto.randomUUID(),
+      sku: `SKU-${Date.now()}`,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      stock: data.stock,
+      category: data.category,
+      status: data.status,
+      image: imageUrl,
+    })
+    .select()
+    .single();
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  return product;
 }
 
 

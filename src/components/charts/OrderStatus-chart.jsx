@@ -1,7 +1,7 @@
 "use client"
 
 import { Pie, PieChart } from "recharts"
-
+import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/chart"
 
 
-import api from '@/service/api'
+// import api from '@/service/api'
 import { useQuery } from '@tanstack/react-query'
 
 export const description = "A pie chart for Orders Statue"
@@ -50,11 +50,20 @@ export default function ChartPieSeparatorNone() {
     queryFn: getDashboardData,
   })
 
-  async function getDashboardData(){
-    const data =await api.get('dashboardStats')
-    console.log(data?.data)
-    return data?.data
+  async function getDashboardData() {
+  const { data, error } = await supabase
+    .from("dashboard_stats")
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+  console.log(data);
+
+  return data;
+}
 
 const chartData = data?.orderStatusSplit.map((p)=>({
     ...p, fill: p.label === 'Delivered' ?

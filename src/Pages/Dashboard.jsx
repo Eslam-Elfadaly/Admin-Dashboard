@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import api from '@/service/api'
+// import api from '@/service/api'
 import {useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 import ChartLineMultiple from '@/components/charts/Sales-chart'
 import { Skeleton } from "@/components/ui/skeleton"
@@ -7,6 +7,7 @@ import { Eye } from 'lucide-react';
 import ViewOrder from './Orders/ViewOrder'
 import ChartPieSeparatorNone from '@/components/charts/OrderStatus-chart'
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabase";
 
 import {
   Select,
@@ -26,15 +27,25 @@ function Dashboard() {
   const [viewOrder, setViewOrder] = useState(false)
   const [viewOrderId, setViewOrderId] = useState(null)
 
+
+  // get dashboardstates
   const {data:dashboard, isLoading:dashboardLoading} = useQuery({
     queryKey:['dashboard'],
     queryFn: getDashboardData,
   })
 
-  async function getDashboardData(){
-    const data =await api.get('dashboardStats')
-    return data?.data
+  async function getDashboardData() {
+  const { data, error } = await supabase
+    .from("dashboard_stats")
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+  return data;
+}
 
   // get recentOrders
   const {data: recentOrders} = useQuery({
@@ -42,11 +53,29 @@ function Dashboard() {
     queryFn: getRecentOrders,
   })
 
-  async function getRecentOrders(){
-    const data = await api.get('orders')
-    const recentOrders = [...data?.data].sort((a, p)=> new Date(p?.date) - new Date(a?.date)).slice(0, 5)
-    return recentOrders || []
+  async function getRecentOrders() {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*");
+
+  if (error) {
+    throw error;
   }
+
+  const recentOrders = [...data]
+  .sort((a, b) => {
+    const dateDiff = new Date(b.date) - new Date(a.date);
+
+    if (dateDiff !== 0) {
+      return dateDiff;
+    }
+
+    return a.id.localeCompare(b.id);
+  })
+  .slice(0, 5);
+
+  return recentOrders || [];
+}
 
 
   // changeOrderStatus
@@ -72,11 +101,20 @@ function Dashboard() {
 }
   })
 
-async function changeOrderStatus({id, status}){
-    const newState = await api.patch(`orders/${encodeURIComponent(id)}`, {status})
-    console.log(newState?.data)
-    return newState?.data
+async function changeOrderStatus({ id, status }) {
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+  return data;
+}
   
 // select items
 const items = dashboard?.orderStatusSplit?.map((o)=> ({label: o.label, value: o.label})) || [];

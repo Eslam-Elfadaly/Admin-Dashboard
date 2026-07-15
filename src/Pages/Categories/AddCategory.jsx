@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { useForm , Controller} from 'react-hook-form';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from '@/lib/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
@@ -40,32 +41,41 @@ function AddCategory({addCategory, setAddCategory, lastId}) {
 
     const {mutate: addCategories, isPending: categoryLoading} = useMutation({
        mutationKey:['categories'],
-       mutationFn: async(categoryData)=>{
+      mutationFn: async (categoryData) => {
 
-        const file = categoryData.image[0];
-        
-        const formData = new FormData();
-        
-        formData.append("file", file);
-        formData.append("upload_preset", "products");
-        
-        const upload = await axios.post(
-          "https://api.cloudinary.com/v1_1/ykupxxdn/image/upload",
-          formData
-        );
-        
-        const imageUrl = upload.data.secure_url;
+  const file = categoryData.image[0];
 
-        const {data} = await api.post(`categories`,{
-            id: `cat-${lastId + 1 }`,
-            name: categoryData?.name,
-            slug: categoryData?.slug,
-            products: categoryData?.products,
-            status: categoryData?.status,
-            image:imageUrl
-        })
-        return data;
-       }, 
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", "products");
+
+  const upload = await axios.post(
+    "https://api.cloudinary.com/v1_1/ykupxxdn/image/upload",
+    formData
+  );
+
+  const imageUrl = upload.data.secure_url;
+
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      id: `cat_${lastId + 1}`,
+      name: categoryData.name,
+      slug: categoryData.slug,
+      products: categoryData.products,
+      status: categoryData.status,
+      image: imageUrl,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+},
        onSuccess: ()=>{
         queryClient.invalidateQueries(['categories']);
         reset();

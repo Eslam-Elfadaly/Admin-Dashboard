@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { useForm , Controller} from 'react-hook-form';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from "@/lib/supabase";
 import { useQuery,useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
@@ -42,49 +43,67 @@ function EditCategory({editCategory, setEditCategory, id}) {
       queryFn: () => getCategory(id),
     })
 
-    async function getCategory(id){
-      if(id){
-       const {data} = await api.get(`categories/${id}`)
-       return data || [];
-      }
-      return [];
-    }
+    async function getCategory(id) {
+
+  if (!id) return null;
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
 
     // edit category
     const queryClient = useQueryClient();
 
     const {mutate: editCategories, isPending: editCategoryLoading} = useMutation({
        mutationKey:['categories'],
-       mutationFn: async(categoryData)=>{
+      mutationFn: async (categoryData) => {
 
-    let imageUrl = category?.image;
+  let imageUrl = category?.image;
 
-    if(categoryData.image?.[0]){
+  if (categoryData.image?.[0]) {
+    const file = categoryData.image[0];
 
-        const file = categoryData.image[0];
-        
-       const formData = new FormData();
-  
-     formData.append("file", file);
-     formData.append("upload_preset", "products");
-  
-  const upload = await axios.post(
-    "https://api.cloudinary.com/v1_1/ykupxxdn/image/upload",
-    formData
-  );
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("upload_preset", "products");
+
+    const upload = await axios.post(
+      "https://api.cloudinary.com/v1_1/ykupxxdn/image/upload",
+      formData
+    );
 
     imageUrl = upload.data.secure_url;
-}
+  }
 
-        const {data} = await api.patch(`categories/${id}`,{
-            name: categoryData?.name,
-            slug: categoryData?.slug,
-            products: categoryData?.products,
-            status: categoryData?.status,
-            image:imageUrl
-        })
-        return data;
-       }, 
+  const { data, error } = await supabase
+    .from("categories")
+    .update({
+      name: categoryData.name,
+      slug: categoryData.slug,
+      products: categoryData.products,
+      status: categoryData.status,
+      image: imageUrl,
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+},
        onSuccess: ()=>{
         queryClient.invalidateQueries(['categories']);
         setEditCategory(false);

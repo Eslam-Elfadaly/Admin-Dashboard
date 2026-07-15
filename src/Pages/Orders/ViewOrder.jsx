@@ -1,7 +1,8 @@
 import React from 'react'
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from "@/lib/supabase";
 import { Button } from '@/components/ui/button';
 import { Spinner } from "@/components/ui/spinner"
 
@@ -12,13 +13,21 @@ const {data: order, isPending: orderLoading} = useQuery({
   queryFn: getOrder,
 })
 
-async function getOrder(){
-  
-  if(id){
-    const {data} = await api.get(`orders/${encodeURIComponent(id)}`);
-    return data || [];
+async function getOrder() {
+
+  if (!id) return null;
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    throw error;
   }
-  return []
+
+  return data;
 }
 
 

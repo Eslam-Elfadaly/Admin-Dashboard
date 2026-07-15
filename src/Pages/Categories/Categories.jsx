@@ -2,7 +2,8 @@ import React, { useMemo } from 'react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
-import api from '@/service/api'
+// import api from '@/service/api'
+import { supabase } from "@/lib/supabase";
 import AddCategory from '@/Pages/Categories/AddCategory'
 import EditCategory from './EditCategory'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,14 +31,22 @@ function Categories() {
       
       
   // get Categories
-  const {data: categories, isPending : categoriesLoading} = useQuery({
-    queryKey:['categories'],
-    queryFn: async ()=>{
-      const {data} = await api.get('categories');
+  const { data: categories, isPending: categoriesLoading } = useQuery({
+  queryKey: ["categories"],
+  queryFn: async () => {
 
-      return data
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      throw error;
     }
-  });
+
+    return data || [];
+  },
+});
 
 const lastId = useMemo(() => {
   if (!categories?.length) return 0;
@@ -51,10 +60,17 @@ const lastId = useMemo(() => {
   const queryClient = useQueryClient();
   const {mutate: deleteCategories, isPending : deleteCategoriesLoading} = useMutation({
     mutationKey:['categories'],
-    mutationFn: async ({id})=>{
-      const {data} = await api.delete(`categories/${id}`);
-      return data;
-    },
+    mutationFn: async ({ id }) => {
+
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+  },
     onSuccess: ()=>{
       queryClient.invalidateQueries({
         queryKey:['categories']

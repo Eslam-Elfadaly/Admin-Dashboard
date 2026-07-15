@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { useForm , Controller} from 'react-hook-form';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from '@/lib/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -40,20 +41,30 @@ function AddCoupon({addCoupon, setAddCoupon, lastId}) {
     const queryClient = useQueryClient();
     const {mutate: addCoupons, isPending: couponLoading} = useMutation({
        mutationKey:['coupons'],
-       mutationFn: async(formData)=>{
-        const {data} = await api.post(`coupons`,{
-            id: `CPN-${lastId + 1 }`,
-            code: formData?.code,
-            type: formData?.type,
-            value: formData?.value,
-            minSpend: formData?.minSpend,
-            used: 0,
-            limit: formData?.limit,
-            expires: formData?.expires,
-            status: formData?.status,
-        })
-        return data;
-       }, 
+      mutationFn: async (formData) => {
+
+  const { data, error } = await supabase
+    .from("coupons")
+    .insert({
+      id: `CPN-${lastId + 1}`,
+      code: formData.code,
+      type: formData.type,
+      value: formData.value,
+      minSpend: formData.minSpend,
+      used: 0,
+      couponLimit: formData.limit, // لو اسم العمود عندك couponLimit
+      expires: formData.expires,
+      status: formData.status,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+},
        onSuccess: ()=>{
         queryClient.invalidateQueries(['coupons']);
         reset();

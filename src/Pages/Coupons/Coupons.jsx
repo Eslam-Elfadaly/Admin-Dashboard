@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
-import api from '@/service/api'
+// import api from '@/service/api'
+import { supabase } from "@/lib/supabase";
 import AddCoupon from '@/Pages/Coupons/AddCoupons'
 import { Spinner } from '@/components/ui/spinner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,10 +29,19 @@ function Coupons() {
   // get Coupons
   const {data: coupons, isPending : couponsLoading} = useQuery({
     queryKey:['coupons'],
-    queryFn: async ()=>{
-      const {data} = await api.get('coupons');
-      return data
-    }
+    queryFn: async () => {
+
+  const { data, error } = await supabase
+    .from("coupons")
+    .select("*")
+    .order("id", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
   });
 
   const lastId = useMemo(() => {
@@ -46,10 +56,17 @@ function Coupons() {
   const queryClient = useQueryClient();
   const {mutate: deleteCoupons, isPending : deleteCouponsLoading} = useMutation({
     mutationKey:['coupons'],
-    mutationFn: async ({id})=>{
-      const {data} = await api.delete(`coupons/${id}`);
-      return data;
-    },
+    mutationFn: async ({ id }) => {
+
+  const { error } = await supabase
+    .from("coupons")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+},
     onSuccess: ()=>{
       queryClient.invalidateQueries({
         queryKey:['coupons']
@@ -112,10 +129,10 @@ function Coupons() {
             <h1 className='text-[19px]'>{c?.type === 'Free Shipping'? 'Free Shipping' : c?.type === 'Fixed Amount' ? `$${c?.value} off`:`${c?.value}% off`}</h1>
             <div className='text-sm text-foreground/50 mb-3'>Min. spend ${c?.minSpend}. Expires {c?.expires}</div>
             <div className='border-b pb-4'>
-              <div className='flex items-center justify-between text-sm text-foreground/50 lg:mb-1'><span>Usage</span> <span>{c?.used} / <span>{(c?.limit || c?.used * 3)}</span></span></div>
+              <div className='flex items-center justify-between text-sm text-foreground/50 lg:mb-1'><span>Usage</span> <span>{c?.used} / <span>{(c?.couponLimit || c?.used * 3)}</span></span></div>
               
               <div className='w-full h-1 bg-muted rounded-2xl relative'>
-                <span className={`absolute top-0 left-0 ${c?.status === 'Expired'? 'bg-red-500' : 'bg-primary'} z-20 h-full rounded-2xl`} style={{width:`${(c?.used / (c?.limit || c?.used * 3)) * 100}%`}}/>
+                <span className={`absolute top-0 left-0 ${c?.status === 'Expired'? 'bg-red-500' : 'bg-primary'} z-20 h-full rounded-2xl`} style={{width:`${(c?.used / (c?.couponLimit || c?.used * 3)) * 100}%`}}/>
               </div>
             </div>
 

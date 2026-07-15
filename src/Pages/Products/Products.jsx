@@ -1,5 +1,6 @@
 import React from 'react'
-import api from '@/service/api'
+// import api from '@/service/api'
+import { supabase } from "@/lib/supabase";
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Switch } from "@/components/ui/switch"
@@ -47,13 +48,22 @@ function Products() {
   
   // get Products
 
-  const {data:products, isPending : productsLoading} = useQuery({
-    queryKey:['products'],
-    queryFn: async ()=>{
-        const {data} = await api.get('products')
-        return data || [];
+  const { data: products, isPending: productsLoading } = useQuery({
+  queryKey: ["products"],
+  queryFn: async () => {
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      throw error;
     }
-  })
+
+    return data || [];
+  }
+});
 
       const filterdProduct =  products?.filter((p)=>{
         const matchCategory = category === 'All Categories' || p?.category === category;
@@ -64,10 +74,17 @@ function Products() {
 
   // get Categories
 
-    async function getCategories (){
-      const {data} = await api.get('categories')
-      return data || [];
-    }
+    async function getCategories() {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
 
    const {data:categories} = useQuery({
 
@@ -96,11 +113,19 @@ function Products() {
   }
 })
 
-async function changeStatus({id, status}){
-  
-  const {data} = await api.patch(`products/${id}`,{
-    status
-  })
+async function changeStatus({ id, status }) {
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({ status })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
   return data;
 }
 
@@ -121,9 +146,19 @@ const {mutate : deleteProduct, isPending:deleteProductLoading} = useMutation({
   }
 })
 
-async function deleteProducts({id}){
-  
-  const {data} = await api.delete(`products/${id}`)
+async function deleteProducts({ id }) {
+
+  const { data, error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
   return data;
 }
 

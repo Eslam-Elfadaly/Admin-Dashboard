@@ -4,18 +4,12 @@ import ModeToggle from '@/components/ui/mode-toggle';
 import { useContext, useEffect, useState} from 'react';
 import { sidebarContext } from "@/Context/SideBarProvider"
 import Notifications from '@/components/features/Notifications';
-import api from '@/service/api';
+// import api from '@/service/api';
+import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from '@/service/firebase';
-import {Button} from '@/components/ui/button'
-
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import TextType from '@/components/TextType';
 
 import {
   DropdownMenu,
@@ -29,27 +23,52 @@ function Navbar() {
     const [notification, setNotification] = useState(false);
     const [user, setUser] = useState(null);
 
+    // getNotifications
+
     const {data : notifications} = useQuery({
       queryKey: ['notifications'],
-      queryFn : async ()=>{
-        const {data} = await api.get('notifications');
-        const notRead = data?.filter((n)=> n?.read === true)
-        return notRead || [];
-      }
+      queryFn: async () => {
+       const { data, error } = await supabase
+         .from("notifications")
+         .select("*")
+         .eq("read", true)
+         .order("date", { ascending: false });
+     
+       if (error) {
+         throw error;
+       }
+     
+       return data || [];
+     }
     })
 
     useEffect(()=>{
       const unsubscribe = onAuthStateChanged(auth, (currentUser)=>{
         setUser(currentUser)
-        console.log(currentUser)
       });
       return () => unsubscribe();
     },[])
   return (
 
     <div className='relative lg:py-4 py-3 px-5 flex gap-3 items-center justify-between bg-sidebar border-b-2 lg:mb-3 '>
-        <PanelLeft onClick={()=>setSidebarOpen(!sidebarOpen)} className='cursor-pointer'/>
 
+      <div className='flex items-center gap-5'>
+        <PanelLeft onClick={()=>setSidebarOpen(!sidebarOpen)} className='cursor-pointer'/>
+        <TextType 
+           className='text-[21px] font-bold text-primary'
+           text={[`${user?.displayName.toUpperCase()}`]}
+           typingSpeed={75}
+           pauseDuration={1500}
+           showCursor
+           cursorCharacter="_"
+           texts={["Welcome to React Bits! Good to see you!","Build some amazing experiences!"]}
+           deletingSpeed={50}
+           variablespeedenabled='false'
+           variablespeedmin={60}
+           variablespeedmax={120}
+           cursorBlinkDuration={0.5}
+/>
+      </div>
 
         <div className='flex items-center gap-3 lg:pr-5'>
            <ModeToggle  className='border-primary'/>
@@ -77,12 +96,7 @@ function Navbar() {
                     {user?.photoURL?
                      <DropdownMenu className='md:hidden'>
                        <DropdownMenuTrigger  className='md:hidden'>
-                         <Button variant="ghost" size="icon" className="rounded-full">
-                           <Avatar>
-                             <AvatarImage src={user?.photoURL} alt="shadcn" />
-                             <AvatarFallback>LR</AvatarFallback>
-                           </Avatar>
-                         </Button>
+                         <img src={user?.photoURL} alt={user?.displayName} />
                        </DropdownMenuTrigger>
                        <DropdownMenuContent align="end" className='w-72 p-5'>
                         <div className="flex flex-col mb-2">

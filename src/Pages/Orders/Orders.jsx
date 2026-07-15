@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '@/service/api'
-
+// import api from '@/service/api'
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -31,13 +31,22 @@ function Orders() {
   const payments = ['Paid', 'Unpaid', 'Refunded'];
 
   // get Orders
-  const {data: orders, isPending : ordersLoading} = useQuery({
-    queryKey:['orders'],
-    queryFn: async()=>{
-      const {data} = await api.get('orders');
-      return data
-    },
-  })
+  const { data: orders, isPending: ordersLoading } = useQuery({
+  queryKey: ["orders"],
+  queryFn: async () => {
+
+    const { data, error } = await supabase
+   .from("orders")
+   .select("*")
+   .order("id", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  },
+});
 
     
     const filterdOrders =  orders?.filter((o)=>{
@@ -67,11 +76,21 @@ function Orders() {
 }
   })
 
-async function changeOrderStatus({id, status}){
-    const newState = await api.patch(`orders/${encodeURIComponent(id)}`, {status})
-    console.log(newState?.data)
-    return newState?.data
+async function changeOrderStatus({ id, status }) {
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+  return data;
+}
 
 // get orders status
 
@@ -80,10 +99,19 @@ async function changeOrderStatus({id, status}){
     queryFn: getDashboardData,
   })
 
-  async function getDashboardData(){
-    const data = await api.get('dashboardStats')
-    return data?.data
+  async function getDashboardData() {
+
+  const { data, error } = await supabase
+    .from("dashboard_stats")
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
   }
+
+  return data;
+}
 
 // order status
 const items = status?.orderStatusSplit?.map((o)=> ({label: o.label, value: o.label})) || [];
