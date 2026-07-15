@@ -56,7 +56,7 @@ function Navbar() {
         <PanelLeft onClick={()=>setSidebarOpen(!sidebarOpen)} className='cursor-pointer'/>
         <TextType 
            className='text-[21px] font-bold text-primary'
-           text={[`${user?.displayName.toUpperCase()}`]}
+           text={[`${user?.displayName.split(' ')?.[0].toUpperCase()}`]}
            typingSpeed={75}
            pauseDuration={1500}
            showCursor
