@@ -7,6 +7,9 @@ During development, I first created a complete mock backend using JSON Server, w
 
 After completing the application, I migrated the project from JSON Server to a real cloud database using Supabase. To speed up the migration process and learn the new backend service, I used AI assistance to help convert the existing REST API calls into Supabase queries. I then integrated the new API throughout the application, verified that all features worked correctly, and resolved the migration issues that arose during the process.
 
+
+## Live Demo : https://admin-dashboard-seven-pi-83.vercel.app/
+
 ## ✨ Features
 
 - 📊 Dashboard analytics
