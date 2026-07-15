@@ -96,7 +96,7 @@ function Navbar() {
                     {user?.photoURL?
                      <DropdownMenu className='md:hidden'>
                        <DropdownMenuTrigger  className='md:hidden'>
-                         <img src={user?.photoURL} alt={user?.displayName} />
+                         <img src={user?.photoURL} className='size-10 rounded-full' alt={user?.displayName} />
                        </DropdownMenuTrigger>
                        <DropdownMenuContent align="end" className='w-72 p-5'>
                         <div className="flex flex-col mb-2">
