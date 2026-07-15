@@ -1,6 +1,11 @@
 # 🖥️ Admin Dashboard
 
-A modern and responsive Admin Dashboard built with React and Vite for managing an e-commerce platform. The project includes full CRUD operations, authentication-ready architecture, analytics charts, and a clean UI designed with Tailwind CSS and shadcn/ui.
+# Project Overview
+
+This project is a fully responsive E-commerce Admin Dashboard built with React and modern frontend technologies.
+During development, I first created a complete mock backend using JSON Server, where I designed multiple REST API endpoints for products, categories, customers, orders, coupons, notifications, and dashboard statistics. This allowed me to build and test all CRUD operations, filtering, searching, pagination, and state management in a realistic development environment.
+
+After completing the application, I migrated the project from JSON Server to a real cloud database using Supabase. To speed up the migration process and learn the new backend service, I used AI assistance to help convert the existing REST API calls into Supabase queries. I then integrated the new API throughout the application, verified that all features worked correctly, and resolved the migration issues that arose during the process.
 
 ## ✨ Features
 
