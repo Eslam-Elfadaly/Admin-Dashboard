@@ -10,13 +10,13 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDLk-ArWVXjtfZU0FZlKlawc1Fp5e-3BEk",
-  authDomain: "e-commerce-app-f349b.firebaseapp.com",
-  projectId: "e-commerce-app-f349b",
-  storageBucket: "e-commerce-app-f349b.firebasestorage.app",
-  messagingSenderId: "473583563600",
-  appId: "1:473583563600:web:257e77ec084ffce4ec7255",
-  measurementId: "G-R2611209J3"
+  apiKey: "AIzaSyB4tzoY3rrWh36z5Sxd1dFE_hTpc1cliXI",
+  authDomain: "admin-dashboard-113e3.firebaseapp.com",
+  projectId: "admin-dashboard-113e3",
+  storageBucket: "admin-dashboard-113e3.firebasestorage.app",
+  messagingSenderId: "612652935418",
+  appId: "1:612652935418:web:25327f9f5fbfc02ae60143",
+  measurementId: "G-0GG81KKLZD"
 };
 
 const app = initializeApp(firebaseConfig);

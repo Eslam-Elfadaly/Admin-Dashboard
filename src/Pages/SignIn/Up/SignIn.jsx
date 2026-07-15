@@ -30,7 +30,6 @@ function SignIn() {
     try{
         setLoading(true);
         const result = await signInWithEmailAndPassword(auth, data.email, data.password);
-        console.log(result);
         navigate('/home/dashboard')
         toast.success(`Welcome, ${result.user?.displayName?.split(" ")[0].toUpperCase()}`, {
         style: {
@@ -78,7 +77,6 @@ function SignIn() {
         },
 
       });
-          console.log(result);
       }
       catch(error){
         toast.warning(`Sign In Error ,${error}`, {
