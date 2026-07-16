@@ -39,5 +39,4 @@ After completing the application, I migrated the project from JSON Server to a r
 - React Router
 - React Hook Form
 - Zod
-- Recharts
 - Lucide React
